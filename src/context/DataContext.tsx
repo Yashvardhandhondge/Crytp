@@ -33,7 +33,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = useState<CryptoData[]>([]);
-  const [filteredData, setFilteredData] = useState<CryptoData[]>([]);
+  const [filteredData, setFilteredData] = useState<CryptoData[]>(data);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterSettings>({
@@ -101,19 +101,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (filters.skipPotentialTraps) {
         shouldInclude = shouldInclude && !item.warnings.some(w => 
-          w.includes("3-day cycle is falling")
+          w.toLowerCase().includes("cycle is falling")
         );
       }
 
       if (filters.avoidOverhypedTokens) {
         shouldInclude = shouldInclude && !item.warnings.some(w => 
-          w.includes("3-day Cycle spent") && w.includes("above 80")
+          w.toLowerCase().includes("cycle spent") && w.toLowerCase().includes("above 80")
         );
       }
 
       if (filters.marketCapFilter) {
         shouldInclude = shouldInclude && !item.warnings.some(w => 
-          w.includes("8-hour/12-hour/1-day/3-day cycle has previously failed")
+          w.toLowerCase().includes("cycle has previously failed")
         );
       }
 

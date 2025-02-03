@@ -74,7 +74,15 @@ export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isColla
     return `hsl(0, ${50 + (intensity * 0.5)}%, ${50 - (intensity * 0.3)}%)`;
   };
 
-  
+  // Update the getRiskBand function to be more precise
+  const getRiskBand = (risk: number) => {
+    const bandPadding = CONTAINER_HEIGHT * 0.05; // 5% padding
+    if (risk >= 80) return CONTAINER_HEIGHT * 0.1 + bandPadding;
+    if (risk >= 60) return CONTAINER_HEIGHT * 0.3 + bandPadding;
+    if (risk >= 40) return CONTAINER_HEIGHT * 0.5 + bandPadding;
+    if (risk >= 20) return CONTAINER_HEIGHT * 0.7 + bandPadding;
+    return CONTAINER_HEIGHT * 0.9 - bandPadding;
+  };
 
   // Initialize and update simulation
   useEffect(() => {
@@ -105,21 +113,25 @@ export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isColla
 
     const initializedData = rangeFilteredData.map(d => ({
       ...d,
-      x: containerWidth / 2,
-      y: CONTAINER_HEIGHT * (1 - d.Risk / 100),
-      radius: (d.bubbleSize ? (d.bubbleSize * 48) % 200 : 48) / 2
+      x: containerWidth / 2 + (Math.random() - 0.5) * containerWidth * 0.6, // Reduced spread from 0.8 to 0.6
+      y: getRiskBand(d.risk || 0),
+      radius: Math.max(20, Math.min(30, d.bubbleSize ? d.bubbleSize * 25 : 30)) // Increased sizes
     }));
-    
 
-    const simulation = d3.forceSimulation<any>(initializedData as any)
-      .force("x", d3.forceX(containerWidth / 2).strength(0.1))
-      .force("y", d3.forceY<any>(d => 
-        20 + CONTAINER_HEIGHT * (1 - d.Risk / 100)
-      ).strength(1))
-      .force("collide", d3.forceCollide().radius(d => ( 24) + 5))
-      .force("charge", d3.forceManyBody().strength(-30))
-      .alphaDecay(0.01) // Slower decay for smoother animation
-      .velocityDecay(0.4); // Adjust for better movement
+    const simulation = d3.forceSimulation<any>(initializedData)
+      .force("x", d3.forceX(d => {
+        const index = initializedData.indexOf(d as any);
+        const spread = containerWidth * 0.4; // Reduced spread from 0.8 to 0.6
+        const offset = (index / initializedData.length - 0.5) * spread;
+        return containerWidth / 2 + offset;
+      }).strength(0.08)) // Slightly increased strength for better positioning
+      //@ts-ignore
+      .force("y", d3.forceY(d => getRiskBand(d.risk || 50)).strength(0.5))
+      //@ts-ignore
+      .force("collide", d3.forceCollide().radius(d => d.radius + 3).strength(0.8))
+      .force("charge", d3.forceManyBody().strength(-40)) // Reduced repulsion slightly
+      .alphaDecay(0.02)
+      .velocityDecay(0.3);
 
     simulationRef.current = simulation;
 
@@ -130,18 +142,19 @@ export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isColla
       .append("div")
       .attr("class", "bubble-container")
       .style("position", "absolute")
+      .style("transform-origin", "center")  // Add this line
       .style("pointer-events", "auto")
       .style("opacity", "0") // Start with opacity 0
       .html(d => `
         <div class="bubble">
           <div class="rounded-full bg-black/20 backdrop-blur-sm shadow-lg transition-transform hover:scale-105"
-               style="width: ${d.radius * 2}px; height: ${d.radius * 2}px;  background-color: ${calculateBubbleColor(d.Risk)}">
+               style="width: ${d.radius * 2}px; height: ${d.radius * 2}px;  background-color: ${calculateBubbleColor(d.risk)}">  
             <div class="w-full h-full rounded-full bg-gradient-to-br from-white/20 to-transparent" />
           </div>
           <div class="absolute inset-0 flex flex-col items-center justify-center text-center group cursor-pointer">
-            ${d.Icon ? `<img src="${d.Icon}" alt="${d.Symbol}" class="w-1/3 h-1/3 object-contain mb-1" loading="lazy" />` : ''}
-            <span class="text-xs font-medium text-white">${d.Symbol}</span>
-            <span class="text-xs font-bold text-white">${d.Risk?.toFixed(1)}%</span>
+            ${d.icon ? `<img src="${d.icon}" alt="${d.symbol}" class="w-1/3 h-1/3 object-contain mb-1" loading="lazy" />` : ''}
+            <span class="text-xs font-medium text-white">${d.symbol}</span>
+            <span class="text-xs font-bold text-white">${d.risk?.toFixed(1)}%</span>
           </div>
         </div>
       `)
@@ -152,8 +165,12 @@ export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isColla
       .duration(500)
       .style("opacity", "1");
 
+    // Update the tick function to add bounds checking
     simulation.on("tick", () => {
-      bubbles.style("transform", d => `translate(${d.x}px, ${d.y}px)`);
+      bubbles
+        .style("left", d => `${Math.max(d.radius, Math.min(containerWidth - d.radius, d.x))}px`)
+        .style("top", d => `${Math.max(d.radius, Math.min(CONTAINER_HEIGHT - d.radius, d.y))}px`)
+        .style("transform", d => `translate(-50%, -50%)`);
     });
 
     return () => {
@@ -199,16 +216,25 @@ export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isColla
         <div className="absolute left-0 top-0 flex flex-col text-sm text-white"
              style={{ width: '30px', height: `${CONTAINER_HEIGHT-50}px` }}>
           {[100, 80, 60, 40, 20, 0].map(level => (
-            <span 
+            <div 
               key={level}
-              className="absolute text-xs"
+              className="absolute w-full"
               style={{ 
-                top: `${CONTAINER_HEIGHT - (level / 100) * CONTAINER_HEIGHT}px`,
+                top: `${CONTAINER_HEIGHT * (1 - level / 100)}px`,
                 transform: 'translateY(-10%)'
               }}
             >
-              {level} -
-            </span>
+              <span className="text-xs">{level} -</span>
+              {level > 0 && (
+                <div 
+                  className="absolute w-[calc(100vw-32px)] h-[1px] left-[30px]" 
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    zIndex: 1
+                  }}
+                />
+              )}
+            </div>
           ))}
         </div>
 
@@ -222,6 +248,7 @@ export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isColla
           style={{ 
             position: 'relative',
             height: `${CONTAINER_HEIGHT}px`,
+            padding: '20px 0'
           }}
         />
       </div>

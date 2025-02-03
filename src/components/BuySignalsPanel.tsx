@@ -17,15 +17,22 @@ import { FaTelegram } from 'react-icons/fa';
 import axios from 'axios';
 
 interface SignalData {
+  description: string;
+  risks: string[];
   symbol: string;
-  price: number;
-  risk: number;
-  timeAgo: string;
-  good: string[];
-  bad: string[];
-  marketCap: string;
-  danger: number;
 }
+
+// Helper function to parse price from description
+const extractPrice = (description: string): string => {
+  const priceMatch = description.match(/\$(\d+(?:\.\d+)?)/);
+  return priceMatch ? priceMatch[1] : '0';
+};
+
+// Helper function to parse percentages from description
+const extractPercentages = (description: string): string[] => {
+  const percentages = description.match(/-?\d+\.\d+%/g);
+  return percentages || [];
+};
 
 interface SubscriptionResponse {
   message: string;
@@ -163,9 +170,8 @@ export const BuySignalsPanel: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xl font-semibold text-white">${signal.symbol}</span>
-                      <span className="text-orange-500 text-sm">{signal.timeAgo} ago</span>
                     </div>
-                    <span className="text-xl font-bold text-white">${signal.price}</span>
+                    <span className="text-xl font-bold text-white">${extractPrice(signal.description)}</span>
                   </div>
                   <button onClick={() => setExpandedSignal(expandedSignal === signal.symbol ? null : signal.symbol)}>
                     {expandedSignal === signal.symbol ? (
@@ -181,19 +187,23 @@ export const BuySignalsPanel: React.FC = () => {
                     <div className="mt-4">
                       <div className="flex items-center gap-2 text-emerald-500 mb-2">
                         <CheckCircle className="w-4 h-4" />
-                        <span className="font-medium">The Good:</span>
+                        <span className="font-medium">Performance:</span>
                       </div>
-                      {signal.good.map((item, i) => (
-                        <div key={i} className="text-gray-400 text-sm ml-6 mb-1">{item}</div>
+                      {extractPercentages(signal.description).map((percentage, i) => (
+                        <div key={i} className={`text-sm ml-6 mb-1 ${
+                          percentage.startsWith('-') ? 'text-red-400' : 'text-green-400'
+                        }`}>
+                          {percentage}
+                        </div>
                       ))}
                     </div>
                     <div className="mt-4">
                       <div className="flex items-center gap-2 text-rose-500 mb-2">
                         <XCircle className="w-4 h-4" />
-                        <span className="font-medium">The Bad:</span>
+                        <span className="font-medium">Risks:</span>
                       </div>
-                      {signal.bad.map((item, i) => (
-                        <div key={i} className="text-gray-400 text-sm ml-6 mb-1">{item}</div>
+                      {signal.risks.map((risk, i) => (
+                        <div key={i} className="text-gray-400 text-sm ml-6 mb-1">{risk}</div>
                       ))}
                     </div>
                   </>
