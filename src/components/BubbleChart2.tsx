@@ -238,7 +238,7 @@ export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isColla
           ))}
         </div>
 
-        <div className="absolute left-10 top-2 text-lg font-semibold z-50  text-white">Risk Levels</div>
+        <div className="absolute left-10 top-2 text-lg font-semibold z-10  text-white">Risk Levels</div>
         <div className="absolute bottom-2 right-10 text-white z-50  font-medium">UNDERVALUED</div>
         <div className="absolute top-2 right-10 text-white z-50 font-medium">OVERVALUED</div>
 
