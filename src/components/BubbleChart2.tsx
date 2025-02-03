@@ -10,8 +10,8 @@ interface BitcoinRiskChartProps {
   isCollapsed?: boolean;
 }
 
-const CONTAINER_HEIGHT = 500;
-const CONTAINER_WIDTH = 2000;
+const CONTAINER_HEIGHT = 600;
+const CONTAINER_WIDTH = 1100;
 
 export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isCollapsed }: BitcoinRiskChartProps) {
   const { filteredData, loading, error } = useData();
