@@ -61,7 +61,7 @@ export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isColla
   }, [filteredData, selectedRange]);
 
   const calculateBubbleColor = (risk: number) => {
-    if (risk >= 50 && risk <= 55) return 'hsl(0, 0%, 50%)'; // Grey for 50-55
+    if (risk >= 50 && risk <= 55) return 'hsl(0, 0%, 10%)'; // Grey for 50-55
     
     if (risk < 50) {
       // Green gradient: 0 (dark green) -> 50 (light green)
@@ -163,7 +163,7 @@ export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isColla
     // Fade in bubbles
     bubbles.transition()
       .duration(500)
-      .style("opacity", "1");
+      .style("opacity", "0.9");
 
     // Update the tick function to add bounds checking
     simulation.on("tick", () => {
@@ -238,9 +238,9 @@ export default function BitcoinRiskChart({ onBubbleClick, selectedRange, isColla
           ))}
         </div>
 
-        <div className="absolute left-8 top-2 text-lg font-semibold text-white">Risk Levels</div>
-        <div className="absolute bottom-2 right-4 text-emerald-300 font-medium">UNDERVALUED</div>
-        <div className="absolute top-2 right-4 text-red-300 font-medium">OVERVALUED</div>
+        <div className="absolute left-10 top-2 text-lg font-semibold z-10  text-white">Risk Levels</div>
+        <div className="absolute bottom-2 right-10 text-white z-50  font-medium">UNDERVALUED</div>
+        <div className="absolute top-2 right-10 text-white z-50 font-medium">OVERVALUED</div>
 
         <div 
           ref={containerRef}
